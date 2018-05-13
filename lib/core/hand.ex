@@ -2,7 +2,8 @@ defmodule FiveCardDraw.Hand do
   alias __MODULE__
   alias FiveCardDraw.Card
 
-  @max_num_of_cards 5
+  @num_of_cards 5
+  @max_num_discardable 3
 
   @enforce_keys [:cards, :exchanged?]
   defstruct(
@@ -37,7 +38,7 @@ defmodule FiveCardDraw.Hand do
 
   # Start draw functionality
   defp num_of_missing_cards(cards) do
-    @max_num_of_cards - length(cards)
+    @num_of_cards - length(cards)
   end
 
   defp get_missing_cards(cards) do
@@ -56,7 +57,22 @@ defmodule FiveCardDraw.Hand do
   end
   # End draw functionality
 
-  def exchange(hand = %Hand{}, ids_to_discard) do
+  def num_of_cards(), do: @num_of_cards
+  def max_num_discardable(), do: @max_num_discardable
+
+  def card_rank_ints(%Hand{ cards: cards }) do
+    cards
+    |> Enum.map(&Card.rank_int/1)
+    |> Enum.sort()
+    |> Enum.reverse()
+  end
+
+  def exchange(hand = %Hand{ exchanged?: false }, []) do
+    hand
+    |> Map.put(:exchanged?, true)
+  end
+
+  def exchange(hand = %Hand{ exchanged?: false }, ids_to_discard) when length(ids_to_discard) <= @max_num_discardable do
     hand
     |> discard(ids_to_discard)
     |> draw()
