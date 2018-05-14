@@ -51,7 +51,7 @@ defmodule FiveCardDraw.Rank do
   defp pair_rank([5]), do: :five_of_a_kind
   defp pair_rank([4, 1]), do: :four_of_a_kind
   defp pair_rank([3, 2]), do: :full_house
-  defp pair_rank([3, 1, 1, 1]), do: :three_of_a_kind
+  defp pair_rank([3, 1, 1]), do: :three_of_a_kind
   defp pair_rank([2, 2, 1]), do: :two_pair
   defp pair_rank([2, 1, 1, 1]), do: :one_pair
   defp pair_rank([1, 1, 1, 1, 1]), do: :high_card
@@ -132,13 +132,10 @@ defmodule FiveCardDraw.Rank do
   defp break_ties({rank, hands}) when rank in @non_pair_ranks, do: non_pair_tie_break(hands)
   defp break_ties({rank, hands}), do: pair_tie_break(rank, hands)
 
-  defp declare_winners(hands), do: hands
-
   def best_hand(hands) do
     hands
     |> find_winners()
     |> break_ties()
-    |> declare_winners()
   end
   # Best hand functionality end
 end

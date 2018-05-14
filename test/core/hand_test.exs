@@ -58,44 +58,44 @@ defmodule FiveCardDraw.HandTest do
     end)
   end
 
-  test "foo 1" do
+  test "exchange can handle we no cards are to be discarded" do
     assert_exchange_success []
   end
 
-  test "foo 2" do
+  test "exchange throws if more cards are to be discarded than are allowed" do
     assert_exchange_raise ["1", "2", "3", "4"]
   end
 
-  test "foo 3" do
+  test "exchange can handle we a legal amount of cards are to be discarded" do
     assert_exchange_success ["1", "2", "3"]
   end
 
-  test "foo 4" do
+  test "exchange throws if hand has already exchanged, even if list is empty" do
     assert_exchange_raise([], true)
   end
 
-  test "foo 5" do
+  test "exchange throws if hand has already exchanged, even if list is illegal" do
     assert_exchange_raise(["1", "2", "3", "4"], true)
   end
 
-  test "foo 6" do
+  test "exchange throws if hand has already exchanged, even if list is legal" do
     assert_exchange_raise(["1", "2", "3"], true)
   end
 
-  # defp rank_int(rank) do
-  #   %Card{ id: "1", rank: rank, suit: :hearts }
-  #   |> Card.rank_int()
-  # end
-  #
-  # test "rank_int returns higher value for queen than three" do
-  #   assert rank_int(:three) < rank_int(:queen)
-  # end
-  #
-  # test "rank_int returns higher value for ace than queen" do
-  #   assert rank_int(:queen) < rank_int(:ace)
-  # end
-  #
-  # test "new generates id" do
-  #   assert Card.new().id != nil
-  # end
+  defp card_rank_ints(n) do
+    test_hand(true)
+    |> Map.update!(:cards, fn cards -> Enum.map(cards, fn card -> Map.put(card, :rank, n) end) end)
+    |> Hand.card_rank_ints()
+  end
+
+  test "card_rank_ints returns list of ints" do
+    card_rank_ints(:five)
+    |> Enum.each(fn n -> assert is_integer(n) end)
+  end
+
+  test "card_rank_ints maps higher cards to higher ints" do
+    [card_rank_ints(:five), card_rank_ints(:three)]
+    |> Enum.zip()
+    |> Enum.each(fn {a, b} -> assert a > b end)
+  end
 end
