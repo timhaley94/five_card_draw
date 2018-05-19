@@ -33,19 +33,26 @@ defmodule FiveCardDraw.Rank do
   ]
 
   # Utils start
-  defp rank_int(rank) do
+  def rank_int(rank) do
     @ranks
     |> Enum.find_index(fn x -> x == rank end)
   end
   # Utils end
 
   # Pair style functionality start
+  defp sort_pairs({length_a, rank_a}, {length_b, rank_b}) when length_a == length_b do
+    Card.rank_int(rank_a) >= Card.rank_int(rank_b)
+  end
+
+  defp sort_pairs({length_a, _rank_a}, {length_b, _rank_b}) do
+    length_a >= length_b
+  end
+
   defp pairs(cards) do
     cards
     |> Enum.group_by(fn x -> x.rank end)
-    |> Enum.map(fn ({_rank, group}) -> length(group) end)
-    |> Enum.sort()
-    |> Enum.reverse()
+    |> Enum.map(fn ({rank, group}) -> {length(group), rank} end)
+    |> Enum.sort(&sort_pairs/2)
   end
 
   defp pair_rank([5]), do: :five_of_a_kind
@@ -59,11 +66,19 @@ defmodule FiveCardDraw.Rank do
   defp pair_rank(cards) do
     cards
     |> pairs()
+    |> Enum.map(fn ({length, _rank}) -> length end)
     |> pair_rank()
   end
 
-  defp pair_tie_break(_rank, hands) do
+  defp max_pair_style_hand(%Hand{ cards: cards }) do
+    cards
+    |> pairs()
+    |> Enum.map(fn ({_length, rank}) -> Card.rank_int(rank) end)
+  end
+
+  defp pair_tie_break(hands) do
     hands
+    |> CompareListsUtils.max_by(&max_pair_style_hand/1)
   end
   # Pair style functionality end
 
@@ -128,9 +143,9 @@ defmodule FiveCardDraw.Rank do
     |> Enum.max_by(fn ({rank, _hands}) -> rank_int(rank) end)
   end
 
-  defp break_ties({_rank, [hand]}), do: hand
+  defp break_ties({_rank, hands}) when length(hands) == 0, do: hands
   defp break_ties({rank, hands}) when rank in @non_pair_ranks, do: non_pair_tie_break(hands)
-  defp break_ties({rank, hands}), do: pair_tie_break(rank, hands)
+  defp break_ties({rank, hands}) when rank in @pair_ranks, do: pair_tie_break(hands)
 
   def best_hand(hands) do
     hands

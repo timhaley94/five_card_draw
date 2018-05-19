@@ -28,7 +28,8 @@ defmodule FiveCardDraw.Card do
 
   defp generate_id, do: uuid1()
 
-  def rank_int(%Card{ rank: rank }) do
+  def rank_int(%Card{ rank: rank }), do: rank_int(rank)
+  def rank_int(rank) do
     @ranks
     |> Enum.find_index(fn(x) -> x == rank end)
   end

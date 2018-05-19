@@ -1,18 +1,23 @@
 defmodule FiveCardDraw.Hand do
   alias __MODULE__
   alias FiveCardDraw.Card
+  import UUID
 
   @num_of_cards 5
   @max_num_discardable 3
 
-  @enforce_keys [:cards, :exchanged?]
+  @enforce_keys [:id, :cards, :exchanged?]
   defstruct(
+    id: nil,
     cards: [],
     exchanged?: false
   )
 
+  defp generate_id, do: uuid1()
+
   defp new_hand() do
     %Hand{
+      id: generate_id(),
       cards: [],
       exchanged?: false
     }

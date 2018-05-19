@@ -1,5 +1,6 @@
 defmodule FiveCardDraw.HandTest do
   use ExUnit.Case
+  import UUID
   alias FiveCardDraw.Hand
   alias FiveCardDraw.Card
 
@@ -11,12 +12,12 @@ defmodule FiveCardDraw.HandTest do
     assert length(Hand.new().cards) == Hand.num_of_cards()
   end
 
-  defp test_hand(), do: test_hand(false)
   defp test_hand(exchanged?) do
     cards = 1..Hand.num_of_cards()
     |> Enum.map(fn n -> Map.put(Card.new(), :id, to_string(n)) end)
 
     %Hand{
+      id: uuid1(),
       cards: cards,
       exchanged?: exchanged?
     }
