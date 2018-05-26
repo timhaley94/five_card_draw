@@ -143,7 +143,7 @@ defmodule FiveCardDraw.Rank do
     |> Enum.max_by(fn ({rank, _hands}) -> rank_int(rank) end)
   end
 
-  defp break_ties({_rank, hands}) when length(hands) == 0, do: hands
+  defp break_ties({_rank, [hand]}), do: [hand]
   defp break_ties({rank, hands}) when rank in @non_pair_ranks, do: non_pair_tie_break(hands)
   defp break_ties({rank, hands}) when rank in @pair_ranks, do: pair_tie_break(hands)
 
