@@ -1,4 +1,4 @@
-defmodule FiveCardDraw.Rank do
+defmodule FiveCardDraw.Ranker do
   alias FiveCardDraw.Card
   alias FiveCardDraw.Hand
   alias FiveCardDraw.CompareListsUtils

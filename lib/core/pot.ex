@@ -10,9 +10,6 @@
 #   defstruct(
 #     number_of_rounds: 2,
 #     current_round: 1,
-#     current_player_id: nil,
-#     total: 0,
-#     lead_bet: 0,
 #     players: []
 #   )
 #
@@ -27,14 +24,29 @@
 #     |>
 #   end
 #
+#   defp lead_bet(%Pot{ players: players }) do
+#     players
+#     |> Enum.sort_by(fn x -> x.current_bet end)
+#     |> Enum.reverse
+#     |> List.first()
+#     |> Map.get(:current_bet)
+#   end
+#
+#   defp previous_player do
+#
+#   end
+#
+#   defp current_player do
+#
+#   end
+#
 #   defp player_is_all_in?(%{ available: current, current_bet: current }), do: true
 #   defp player_is_all_in?(_player), do: false
 #
-#   def finished?(%Pot{ number_of_rounds: max, current_round: current }) when current > max, do: true
-#   def finished?(%Pot{ players: players }) do
-#     players
-#     |> Enum.any?(&player_is_all_in?/1)
-#   end
+#   def finished?(%Pot{ number_of_rounds: max, current_round: current }), do: current > max
+#   def finished?()
+#
+#   defp init_player_maps(pa)
 #
 #   def new(players, %{ number_of_rounds: max, current_round: current }) do
 #     %Pot{

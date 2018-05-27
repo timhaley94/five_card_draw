@@ -1,7 +1,7 @@
-defmodule FiveCardDraw.RankTest do
+defmodule FiveCardDraw.RankerTest do
   use ExUnit.Case
   import UUID
-  alias FiveCardDraw.Rank
+  alias FiveCardDraw.Ranker
   alias FiveCardDraw.Hand
   alias FiveCardDraw.Card
 
@@ -19,7 +19,7 @@ defmodule FiveCardDraw.RankTest do
   end
 
   defp assert_rank(hand, expected) do
-    assert Rank.rank(hand) == expected
+    assert Ranker.rank(hand) == expected
   end
 
   defp high_card(), do: high_card(:ace)
@@ -173,7 +173,7 @@ defmodule FiveCardDraw.RankTest do
 
   defp assert_best_hand(loser, winner) do
     [loser, winner]
-    |> Rank.best_hand()
+    |> Ranker.best_hand()
     |> Enum.at(0)
     |> assert_same_hand(winner)
   end
