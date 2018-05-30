@@ -25,6 +25,7 @@ defmodule FiveCardDraw.Mixfile do
     [{:cowboy, "~> 1.0.0"},
      {:excoveralls, "~> 0.8", only: :test},
      {:plug, "~> 1.0"},
-     { :uuid, "~> 1.1" }]
+     { :uuid, "~> 1.1" },
+     {:shorter_maps, "~> 2.0"},]
   end
 end
