@@ -73,34 +73,6 @@ defmodule FiveCardDraw.Pot do
     end
   end
 
-  def bet(pot = ~M{%Pot current_id}, data = ~M{bet}) do
-    if valid_bet?(pot, data) do
-      pot
-      |> update_in([:players, current_id, :purse], fn purse -> Purse.bet(purse, bet) end)
-      |> update_meta_data()
-      |> handle_all_in(current_id)
-    else
-      pot
-    end
-  end
-
-  def move(pot = ~M{%Pot finished?, current_id}, data = ~M{action, player_id})
-      when not finished? and player_id == current_id do
-    case action do
-      :bet -> bet(pot, data)
-      :fold -> fold(pot)
-      _ -> pot
-    end
-  end
-
-  def move(pot, _data), do: pot
-
-  defp fold(pot = ~M{%Pot current_id}) do
-    pot
-    |> update_meta_data()
-    |> deactivate_player(current_id)
-  end
-
   defp deactivate_player(pot = ~M{%Pot active_ids}, player_id) do
     pot
     |> Map.put(:active_ids, Enum.reject(active_ids, fn id -> id == player_id end))
@@ -128,15 +100,14 @@ defmodule FiveCardDraw.Pot do
     |> advance_current_id(next_value(active_ids, current_id))
   end
 
-  defp all_players_all_in?(~M{%Pot players}) do
-    players
-    |> Enum.all?(&all_in?/1)
+  defp finished?(pot = ~M{%Pot active_ids, players}) do
+    length(active_ids) == 1 or Enum.all?(players, &all_in?/1)
   end
 
   defp set_finished(pot = ~M{%Pot finished?: true}), do: pot
   defp set_finished(pot = %Pot{}) do
     pot
-    |> Map.put(:finished?, all_players_all_in?(pot))
+    |> Map.put(:finished?, finished?(pot))
   end
 
   defp update_meta_data(pot = %Pot{}) do
@@ -144,6 +115,34 @@ defmodule FiveCardDraw.Pot do
     |> advance_current_id()
     |> set_finished()
   end
+
+  defp bet(pot = ~M{%Pot current_id}, data = ~M{bet}) do
+    if valid_bet?(pot, data) do
+      pot
+      |> update_in([:players, current_id, :purse], fn purse -> Purse.bet(purse, bet) end)
+      |> update_meta_data()
+      |> handle_all_in(current_id)
+    else
+      pot
+    end
+  end
+
+  defp fold(pot = ~M{%Pot current_id}) do
+    pot
+    |> update_meta_data()
+    |> deactivate_player(current_id)
+  end
+
+  def move(pot = ~M{%Pot finished?, current_id}, data = ~M{action, player_id})
+      when not finished? and player_id == current_id do
+    case action do
+      :bet -> bet(pot, data)
+      :fold -> fold(pot)
+      _ -> pot
+    end
+  end
+
+  def move(pot, _data), do: pot
 
   defp init_active_ids(players) do
     players
@@ -154,6 +153,13 @@ defmodule FiveCardDraw.Pot do
     %{
       id: id,
       purse: Purse.new(available_money)
+    }
+  end
+
+  defp init_player(~M{id}) do
+    %{
+      id: id,
+      purse: Purse.new()
     }
   end
 
