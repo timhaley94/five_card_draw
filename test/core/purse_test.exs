@@ -1,6 +1,7 @@
 defmodule FiveCardDraw.PurseTest do
   use ExUnit.Case
   alias FiveCardDraw.Purse
+  import ShorterMaps
 
   defp assert_equal(x, y) do
     assert x == y
@@ -65,19 +66,19 @@ defmodule FiveCardDraw.PurseTest do
     test_broke(-500, true)
   end
 
-  defp call_bet(%{ starting_bet: starting_bet, next_bet: next_bet }) do
+  defp call_bet(~M{starting_bet, next_bet, available}) do
     %Purse{
       current_bet: starting_bet,
-      available_money: 1000
+      available_money: available
     }
     |> Purse.bet(next_bet)
   end
 
-  defp test_bet(opts = %{ starting_bet: starting_bet, next_bet: next_bet }) do
+  defp test_bet(opts = ~M{expected}) do
     opts
     |> call_bet()
     |> Map.fetch!(:current_bet)
-    |> assert_equal(starting_bet + next_bet)
+    |> assert_equal(expected)
   end
 
   defp test_bet_error(opts) do
@@ -89,32 +90,48 @@ defmodule FiveCardDraw.PurseTest do
   test "bet can handle an initial bet" do
     test_bet(%{
       starting_bet: 0,
-      next_bet: 500
+      next_bet: 500,
+      available: 1000,
+      expected: 500
     })
   end
 
   test "bet can handle a second bet" do
     test_bet(%{
-      starting_bet: 500,
-      next_bet: 250
+      starting_bet: 250,
+      next_bet: 500,
+      available: 1000,
+      expected: 500
     })
   end
 
   test "bet can handle an all in bet" do
     test_bet(%{
       starting_bet: 500,
-      next_bet: 500
+      next_bet: 1000,
+      available: 750,
+      expected: 750
+    })
+  end
+
+  test "bet can handle bet after all in" do
+    test_bet(%{
+      starting_bet: 1000,
+      next_bet: 1200,
+      available: 1000,
+      expected: 1000
     })
   end
 
   test "bet errors on greater than all in bet" do
     test_bet_error(%{
-      starting_bet: 1000,
-      next_bet: 250
+      starting_bet: 500,
+      next_bet: 250,
+      available: 1000,
     })
   end
 
-  defp test_resolve_bet(%{ current: current, available: available, winnings: winnings, expected: expected }) do
+  defp test_resolve_bet(~M{current, available, winnings, expected}) do
     %Purse{
       current_bet: current,
       available_money: available

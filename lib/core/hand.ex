@@ -84,6 +84,8 @@ defmodule FiveCardDraw.Hand do
     |> Map.put(:exchanged?, true)
   end
 
+  def exchanged?(%Hand{ exchanged?: exchanged? }), do: exchanged?
+
   def new do
     new_hand()
     |> draw()

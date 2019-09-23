@@ -1,5 +1,6 @@
 defmodule FiveCardDraw.Purse do
   alias __MODULE__
+  import ShorterMaps
 
   @starting_cash 1000
 
@@ -8,26 +9,30 @@ defmodule FiveCardDraw.Purse do
     current_bet: 0
   )
 
-  def all_in?(%Purse{ current_bet: current, available_money: available }) do
-    current >= available
+  def all_in?(~M{%Purse current_bet, available_money}) do
+    current_bet >= available_money
   end
 
-  def broke?(%Purse{ available_money: available }), do: available <= 0
+  def broke?(~M{%Purse available_money}), do: available_money <= 0
 
   def starting_cash(), do: @starting_cash
 
-  def bet(purse = %Purse{ current_bet: current, available_money: available }, bet) when current + bet <= available do
+  def available_money(~M{%Purse available_money}), do: available_money
+
+  def current_bet(~M{%Purse current_bet}), do: current_bet
+
+  def bet(purse = ~M{%Purse current_bet, available_money}, bet) when bet >= current_bet do
     purse
-    |> Map.put(:current_bet, current + bet)
+    |> Map.put(:current_bet, min(bet, available_money))
   end
 
-  def resolve_bet(purse = %Purse{ current_bet: current, available_money: available }, winnings) do
+  def resolve_bet(purse = ~M{%Purse current_bet, available_money}, winnings) do
     purse
     |> Map.put(:current_bet, 0)
-    |> Map.put(:available_money, max(available + (winnings - current), 0))
+    |> Map.put(:available_money, max(available_money + winnings - current_bet, 0))
   end
 
-  def new(%{ available_money: available_money }) when not is_nil(available_money) do
+  def new(~M{available_money}) when not is_nil(available_money) do
     %Purse{
       available_money: available_money
     }

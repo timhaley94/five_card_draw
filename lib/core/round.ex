@@ -1,157 +1,255 @@
 defmodule FiveCardDraw.Round do
   alias __MODULE__
-  import ListUtils
+  alias FiveCardDraw.Player
+  alias FiveCardDraw.ListUtils
+  import ShorterMaps
 
   @stages [
     :ante,
     :bet_1,
+    :call_1,
     :draw,
-    :bet_2
+    :bet_2,
+    :call_2,
   ]
 
-  @betting_stages [:ante, :bet_1, :bet_2]
+  @betting_rounds [:bet_1, :bet_2]
+  @call_rounds [:call_1, :call_2]
 
   @first_stage List.first(@stages)
   @last_stage List.last(@stages)
 
-  @enforce_keys [:players]
+  @enforce_keys [:active_ids, :players]
   defstruct(
     finished?: false,
     stage: @first_stage,
-    player_ids: %MapSet{},
-    play_order: [],
-    hands: %{},
-    pot: %Pot{}
+    current_id: nil,
+    active_ids: [],
+    players: %{}
   )
 
-  defp first_player_id(round) do
+  defp advance_stage(round = %Round{}) do
     round
-    |> get_ids()
-    |> List.first()
+    |> Map.update!(:stage, fn x -> ListUtils.next_value(@stages, x) end)
   end
 
-  defp next_player_id(round, player_id) do
+  defp advance_current_id(round = ~M{%Round stage, active_ids}) when stage in @betting_rounds do
     round
-    |> get_ids()
-    |> ListUtils.next_value(player_id)
+    |> Map.update!(:current_id, fn x ->
+      ListUtils.next_value(active_ids, x)
+    end)
   end
 
-  defp advance_next_player(round, nil) do
+  defp advance_current_id(round = ~M{%Round stage}) when stage in @call_rounds do
+    cb = current_bet(round)
+
+    next_id = round
+    |> active_players()
+    |> Enum.find(fn x -> not Player.matches_bet?(x, cb) end)
+    |> Map.fetch!(:id)
+
+    Map.put(round, :current_id, next_id)
+  end
+
+  defp advance_current_id(round = %Round{}), do: round
+
+  defp reset_current_id(round = ~M{%Round active_ids}) do
+    round
+    |> Map.put(:current_id, List.first(active_ids))
+  end
+
+  defp remove_id(round = %Round{}, id) do
+    round
+    |> Map.update!(:active_ids, fn x ->
+      Enum.reject(x, fn y -> y == id end)
+    end)
+  end
+
+  defp update_player(round = %Round{}, player_id, func) do
+    round
+    |> Map.update!(:players, fn players ->
+      Map.update!(players, player_id, fn player ->
+        func.(player)
+      end)
+    end)
+  end
+
+  defp deal_hands(round = %Round{}) do
+    round
+    |> Map.update!(:players, fn players ->
+      players
+      |> Enum.map(fn {id, player} -> {id, Player.deal(player)} end)
+      |> Map.new()
+    end)
+  end
+
+  defp action(round = ~M{%Round current_id: player_id}, ~M{player_id, action: :fold}) do
+    round
+    |> advance_current_id()
+    |> remove_id(player_id)
+  end
+
+  defp action(round = %Round{}, ~M{player_id, action: :fold}) do
+    round
+    |> remove_id(player_id)
+  end
+
+  defp action(round = ~M{%Round stage: :ante}, ~M{player_id}) do
+    round
+    |> update_player(player_id, &Player.ante/1)
+  end
+
+  defp action(round = ~M{%Round stage: :draw}, ~M{player_id, ids_to_discard}) do
+    round
+    |> update_player(player_id, fn x ->
+      Player.draw(x, ids_to_discard)
+    end)
+  end
+
+  defp action(round = ~M{%Round stage, current_id: player_id}, opts = ~M{player_id, action: :call}) when stage in @betting_rounds do
+    o = opts
+    |> Map.put(:action, :raise)
+    |> Map.put(:amount, 0)
+
+    action(round, o)
+  end
+
+  defp action(round = ~M{%Round stage, current_id: player_id}, ~M{player_id, amount, action: :raise}) when stage in @betting_rounds do
+    round
+    |> advance_current_id()
+    |> update_player(player_id, fn x ->
+      Player.bet(x, amount + current_bet(round))
+    end)
+  end
+
+  defp action(round = ~M{%Round stage, current_id: player_id}, ~M{player_id}) when stage in @call_rounds do
+    round
+    |> advance_current_id()
+    |> update_player(player_id, fn x ->
+      Player.bet(x, current_bet(round))
+    end)
+  end
+
+  defp action(round = %Round{}, _context), do: round
+
+  defp current_bet(round = %Round{}) do
+    round
+    |> active_players()
+    |> Enum.map(&Player.current_bet/1)
+    |> Enum.max()
+  end
+
+  defp active_players(~M{%Round active_ids, players}) do
+    active_ids
+    |> Enum.map(fn id ->
+      Map.fetch!(players, id)
+    end)
+  end
+
+  defp all_players_anted?(round = %Round{}) do
+    round
+    |> active_players()
+    |> Enum.all?(&Player.anted?/1)
+  end
+
+  defp all_players_drew?(round = %Round{}) do
+    round
+    |> active_players()
+    |> Enum.all?(&Player.drew?/1)
+  end
+
+  defp should_skip_call_round?(round = %Round{}) do
+    cb = current_bet(round)
+
+    round
+    |> active_players()
+    |> Enum.all?(fn x -> Player.matches_bet?(x, cb) end)
+  end
+
+  defp update_meta(round = ~M{%Round stage: :ante, players}) do
+    if all_players_anted?(round) do
+      round
+      |> advance_stage()
+      |> reset_current_id()
+      |> deal_hands()
+    else
+      round
+    end
+  end
+
+  defp update_meta(round = ~M{%Round stage, current_id: nil}) when stage in @betting_rounds do
+    if should_skip_call_round?(round) do
+      round
+      |> advance_stage()
+      |> advance_stage()
+    else
+      round
+      |> advance_stage()
+      |> reset_current_id()
+    end
+  end
+
+  defp update_meta(round = ~M{%Round stage, current_id: nil}) when stage in @call_rounds do
     round
     |> advance_stage()
-    |> Map.put(:current_player_id, first_player_id(round))
   end
 
-  defp advance_next_player(round, next_player_id) do
+  defp update_meta(round = ~M{%Round stage: :draw}) do
+    if all_players_drew?(round) do
+      round
+      |> advance_stage()
+      |> reset_current_id()
+    else
+      round
+    end
+  end
+
+  defp update_meta(round = %Round{}), do: round
+
+  defp mark_winners(round = %Round{}) do
+    if length(round.active_ids) <= 1 or is_nil(round.stage) do
+      round
+      |> Map.put(:finished?, true)
+    else
+      round
+    end
+  end
+
+  def move(round = %Round{}, context) do
     round
-    |> Map.put(current_player_id: next_player_id)
+    |> action(context)
+    |> update_meta()
+    |> mark_winners()
   end
 
-  defp advance_next_player(round = %Round{ current_player_id: current }) do
+  def awaiting_ids(round = ~M{%Round stage: :ante}) do
     round
-    |> advance_next_player(next_player_id(current))
+    |> active_players()
+    |> Enum.reject(&Player.anted?/1)
+    |> Enum.map(fn x -> x.id end)
   end
 
-  defp init_players(players) do
-    players
-    |> Enum.map(fn player -> Map.put(player, :hand, Hand.new()) end)
+  def awaiting_ids(round = ~M{%Round stage: :draw}) do
+    round
+    |> active_players()
+    |> Enum.filter(&Player.drew?/1)
+    |> Enum.map(fn x -> x.id end)
   end
 
-  def init(players) do
+  def awaiting_ids(round = ~M{%Round stage, current_id}) when stage in @betting_rounds do
+    [current_id]
+  end
+
+  def awaiting_ids(round = ~M{%Round stage, current_id}) when stage in @call_rounds do
+    [current_id]
+  end
+
+  def active_ids(~M{%Round active_ids}), do: active_ids
+
+  def new(players) when is_list(players) do
     %Round{
-      players: init_players(players)
+      players: Map.new(players, fn x -> {x.id, x} end),
+      active_ids: Enum.map(players, fn x -> x.id end)
     }
-    |> Map.put(:current_player_id, first_player_id(round))
   end
 end
-
-
-
-### New attempt August 4th, 2018
-
-defp next_stage(stage), do: ListUtils.next_value(@stages, stage)
-
-defp advance_stage(round = %Round{ stage: :ante }) do
-  round
-  |> deal_hands()
-  |> Map.update!(:stage, &next_stage/1)
-end
-
-defp advance_stage(round = ~M{ %Round, stage }) when stage == @last_stage do
-  round
-  |> Map.put(:finished?, true)
-end
-
-defp advance_stage(round = %Round{}) do
-  round
-  |> Map.update!(:stage, &next_stage/1)
-end
-
-# Handle Bet functionality start
-defp update_stage_after_bet(round = %Round{}, ~M{ old_round }) do
-  if round.pot.finished? or round.pot.current_round > old_round do
-    advance_stage(round)
-  else
-    round
-  end
-end
-
-defp deal_hands(round = ~M{ %Round, player_ids }) do
-  round
-  |> Map.put(:hands, deal_hands(player_ids))
-end
-
-defp deal_hands(player_ids = %MapSet{}) do
-  player_ids
-  |> MapSet.to_list()
-  |> Enum.map(&Hand.new/0)
-end
-
-defp bet(round = %Round{}, context) do
-  round
-  |> Map.update!(:pot, &(Pot.move(&1, context)))
-end
-
-defp handle_bet(round = %Round{}, context) do
-  round
-  |> bet(context)
-  |> update_stage_after_bet(%{ old_round: round.pot.current_round })
-end
-# Handle Bet functionality end
-
-# Handle Draw functionality start
-defp all_hands_exchanged?(round = ~M{ %Round, hands }) do
-  hands
-  |> Enum.all?(fn ({ _id, hand }) -> hand.exchanged? end)
-end
-
-defp update_stage_after_draw(round = %Round{}) do
-  if all_hands_exchanged?(round) do
-    advance_stage(round)
-  else
-    round
-  end
-end
-
-defp draw(round = %Round{}, ~M{ player_id, ids_to_discard }) do
-  round
-  |> update_in([:hands, player_id], &(Hand.exchange(&1, ids_to_discard)))
-end
-
-defp hangle_draw(round = %Round{}, context) do
-  round
-  |> draw(context)
-  |> update_stage_after_draw()
-end
-# Handle Draw functionality end
-
-defp move_handler(:ante), do: &handle_ante/2
-defp move_handler(:bet_1), do: &handle_bet/2
-defp move_handler(:draw), do: &handle_draw/2
-defp move_handler(:bet_2), do: &handle_bet/2
-
-def move(round = ~M{ %Round, current_player_id: current, stage }, ~M{ player_id: current, context }) do
-  move_handler(stage).(round, context)
-end
-
-def move(round = %Round{}, _opts), do: round
