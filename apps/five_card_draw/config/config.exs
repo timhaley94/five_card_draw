@@ -4,7 +4,6 @@
 # the umbrella root.
 use Mix.Config
 
-config :five_card_draw,
-  ecto_repos: [FiveCardDraw.Repo]
+config :five_card_draw, []
 
 import_config "#{Mix.env()}.exs"

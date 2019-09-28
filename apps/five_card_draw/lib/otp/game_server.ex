@@ -1,4 +1,4 @@
-defmodule FiveCardDraw.LobbyServer do
+defmodule FiveCardDraw.GameServer do
   alias FiveCardDraw.Lobby
   use GenServer
 

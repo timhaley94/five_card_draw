@@ -35,6 +35,13 @@ defmodule FiveCardDraw.MixProject do
   #
   # Type `mix help deps` for examples and options.
   defp deps do
+    [{:shorter_maps, "~> 2.0"},
+     { :elixir_uuid, "~> 1.2" }]
+  end
+
+  # Aliases are shortcuts or tasks specific to the current project.
+  # See the documentation for `Mix` for more info on aliases.
+  defp aliases do
     []
   end
 end

@@ -1,12 +1,15 @@
 defmodule FiveCardDraw.Application do
   use Application
+  alias FiveCardDraw.UserServer
+  alias FiveCardDraw.GameRegistry
+  alias FiveCardDraw.GameSupervisor
 
   defp children do
-    []
+    [UserServer, GameRegistry, GameSupervisor]
   end
 
   defp supervisor_opts do
-    [strategy: :one_for_one,
+    [strategy: :rest_for_one,
      name: FiveCardDraw.Supervisor]
   end
 
