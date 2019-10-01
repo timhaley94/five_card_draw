@@ -5,7 +5,11 @@ defmodule FiveCardDraw.Application do
   alias FiveCardDraw.GameSupervisor
 
   defp children do
-    [UserServer, GameRegistry, GameSupervisor]
+    [
+      GameRegistry.spec(),
+      UserServer,
+      GameSupervisor,
+    ]
   end
 
   defp supervisor_opts do

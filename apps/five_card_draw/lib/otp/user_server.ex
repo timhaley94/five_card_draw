@@ -11,8 +11,8 @@ defmodule FiveCardDraw.UserServer do
     {:ok, GenServer.call(__MODULE__, {:add_user})}
   end
 
-  def auth_user(opts) do
-    {GenServer.call(__MODULE__, {:auth_user, opts})}
+  def auth_user(user_id, token) do
+    {GenServer.call(__MODULE__, {:auth_user, user_id, token})}
   end
 
   def start_link(_) do
@@ -36,7 +36,7 @@ defmodule FiveCardDraw.UserServer do
   end
 
   @impl true
-  def handle_call({:auth_user, ~M{id, token}}, _from, users) do
+  def handle_call({:auth_user, id, token}, _from, users) do
     t = users
     |> Map.get(id, %{})
     |> Map.get(:token, nil)
