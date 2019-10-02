@@ -76,9 +76,21 @@ defmodule FiveCardDraw.Ranker do
     |> Enum.map(fn ({_length, rank}) -> Card.rank_int(rank) end)
   end
 
+  defp max_pair_rank(hand = %Hand{}) do
+    hand
+    |> max_pair_style_hand()
+    |> Enum.sort(fn (a, b) -> a >= b end)
+    |> List.first()
+  end
+
   defp pair_tie_break(hands) do
     hands
-    |> CompareListsUtils.max_by(&max_pair_style_hand/1)
+    |> Enum.sort(fn (hand1, hand2) ->
+      rank1 = max_pair_rank(hand1)
+      rank2 = max_pair_rank(hand2)
+
+      rank1 >= rank2
+    end)
   end
   # Pair style functionality end
 
@@ -116,7 +128,12 @@ defmodule FiveCardDraw.Ranker do
 
   defp non_pair_tie_break(hands) do
     hands
-    |> CompareListsUtils.max_by(&Hand.card_rank_ints/1)
+    |> Enum.sort(fn (hand1, hand2) ->
+      max1 = Hand.high_card_rank_int(hand1)
+      max2 = Hand.high_card_rank_int(hand2)
+
+      max1 >= max2
+    end)
   end
   # Non pair style functionality start
 
@@ -137,20 +154,22 @@ defmodule FiveCardDraw.Ranker do
   # Rank functionality end
 
   # Best hand functionality start
-  defp find_winners(hands) do
-    hands
-    |> Enum.group_by(&rank/1)
-    |> Enum.max_by(fn ({rank, _hands}) -> rank_int(rank) end)
+  defp break_ties({_rank, [hand]}), do: [hand]
+
+  defp break_ties({rank, hands}) when rank in @non_pair_ranks do
+    non_pair_tie_break(hands)
   end
 
-  defp break_ties({_rank, [hand]}), do: [hand]
-  defp break_ties({rank, hands}) when rank in @non_pair_ranks, do: non_pair_tie_break(hands)
-  defp break_ties({rank, hands}) when rank in @pair_ranks, do: pair_tie_break(hands)
+  defp break_ties({rank, hands}) when rank in @pair_ranks do
+    pair_tie_break(hands)
+  end
 
   def best_hand(hands) do
     hands
-    |> find_winners()
-    |> break_ties()
+    |> Enum.group_by(&rank/1)
+    |> Enum.sort(fn ({rank1, _}, {rank2, _}) -> rank_int(rank1) >= rank_int(rank2) end)
+    |> Enum.map(&break_ties/1)
+    |> List.flatten()
   end
   # Best hand functionality end
 end

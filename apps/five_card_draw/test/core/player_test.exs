@@ -3,44 +3,51 @@ defmodule FiveCardDraw.PlayerTest do
   alias FiveCardDraw.Player
   alias FiveCardDraw.Hand
   alias FiveCardDraw.Purse
+  import UUID
   import ShorterMaps
 
   defp assert_equal(x, y) do
     assert x == y
   end
 
-  test "creates unique id" do
-    assert Player.new().id != Player.new().id
+  test "uses id" do
+    id = uuid1()
+    assert Player.new(id).id == id
   end
 
   test "initializes with no bet" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.current_bet()
     |> assert_equal(0)
   end
 
   test "anted? before ante" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.anted?()
     |> assert_equal(false)
   end
 
   test "ante sets anted?" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.anted?()
     |> assert_equal(true)
   end
 
   test "ante updates current bet" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.current_bet()
     |> assert_equal(5)
   end
 
   test "second ante doesn't update anted?" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.ante()
     |> Player.anted?()
@@ -48,7 +55,8 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "second ante doesn't update current bet" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.ante()
     |> Player.current_bet()
@@ -56,13 +64,15 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "initializes with no hand" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.hand()
     |> assert_equal(nil)
   end
 
   test "deal" do
-    h = Player.new()
+    h = uuid1()
+    |> Player.new()
     |> Player.deal()
     |> Player.hand()
 
@@ -70,7 +80,10 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "deal with hand alreay" do
-    p = Player.new() |> Player.deal()
+    p = uuid1()
+    |>Player.new()
+    |> Player.deal()
+
     h1 = p |> Player.hand()
     h2 = p
     |> Player.deal()
@@ -99,25 +112,29 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "draw without hand" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> test_drew?(false)
   end
 
   test "draw with hand" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.deal()
     |> test_drew?(true)
   end
 
   test "bet before ante" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.bet(25)
     |> Player.current_bet()
     |> assert_equal(0)
   end
 
   test "normal bet" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.bet(25)
     |> Player.current_bet()
@@ -125,7 +142,8 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "normal bet does not set all_in?" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.bet(25)
     |> Player.all_in?()
@@ -133,7 +151,8 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "all in bet" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.bet(1200)
     |> Player.current_bet()
@@ -141,7 +160,8 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "all in bet sets all_in?" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.bet(1200)
     |> Player.all_in?()
@@ -149,7 +169,8 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "second all in bet" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.bet(1200)
     |> Player.bet(2000)
@@ -158,7 +179,8 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "second all in bet does not set all_in?" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.bet(1200)
     |> Player.bet(2000)
@@ -167,7 +189,8 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "resolve no winnings resets current_bet" do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.bet(25)
     |> Player.resolve_round(0)
@@ -176,7 +199,8 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   defp test_resolve(~M{bet, winnings, expected}) do
-    Player.new()
+    uuid1()
+    |> Player.new()
     |> Player.ante()
     |> Player.bet(bet)
     |> Player.resolve_round(winnings)
@@ -225,7 +249,7 @@ defmodule FiveCardDraw.PlayerTest do
   end
 
   test "resolve fields reset" do
-    p1 = Player.new()
+    p1 = uuid1() |> Player.new()
 
     p2 = p1
     |> Player.ante()

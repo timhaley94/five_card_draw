@@ -3,16 +3,11 @@ defmodule FiveCardDrawWeb.Application do
   # for more information on OTP Applications
   @moduledoc false
 
+  alias FiveCardDrawWeb.Endpoint
   use Application
 
   def start(_type, _args) do
-    # List all child processes to be supervised
-    children = [
-      # Start the endpoint when the application starts
-      FiveCardDrawWeb.Endpoint
-      # Starts a worker by calling: FiveCardDrawWeb.Worker.start_link(arg)
-      # {FiveCardDrawWeb.Worker, arg},
-    ]
+    children = [Endpoint]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -23,7 +18,7 @@ defmodule FiveCardDrawWeb.Application do
   # Tell Phoenix to update the endpoint configuration
   # whenever the application is updated.
   def config_change(changed, _new, removed) do
-    FiveCardDrawWeb.Endpoint.config_change(changed, removed)
+    Endpoint.config_change(changed, removed)
     :ok
   end
 end

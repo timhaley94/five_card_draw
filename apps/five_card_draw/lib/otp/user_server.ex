@@ -1,7 +1,6 @@
 defmodule FiveCardDraw.UserServer do
   use GenServer
   import UUID
-  import ShorterMaps
 
   defp generate_id, do: uuid1()
   defp generate_token, do: uuid1()

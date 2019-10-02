@@ -2,6 +2,7 @@ defmodule FiveCardDraw.RoundTest do
   use ExUnit.Case
   alias FiveCardDraw.Round
   alias FiveCardDraw.Player
+  import UUID
 
   defp assert_equal(a, b) do
     assert a == b
@@ -17,9 +18,9 @@ defmodule FiveCardDraw.RoundTest do
 
   defp ante_test_data() do
     Round.new([
-      Player.new(),
-      Player.new(),
-      Player.new()
+      Player.new(uuid1()),
+      Player.new(uuid1()),
+      Player.new(uuid1())
     ])
   end
 

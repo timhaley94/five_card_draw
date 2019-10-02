@@ -2,6 +2,7 @@ defmodule FiveCardDraw.Round do
   alias __MODULE__
   alias FiveCardDraw.Player
   alias FiveCardDraw.ListUtils
+  alias FiveCardDraw.Ranker
   import ShorterMaps
 
   @stages [
@@ -206,14 +207,20 @@ defmodule FiveCardDraw.Round do
 
   defp update_meta(round = %Round{}), do: round
 
-  defp mark_winners(round = %Round{}) do
+  defp mark_winners(round = ~M{%Round players}) do
     if length(round.active_ids) <= 1 or is_nil(round.stage) do
       round
       |> Map.put(:finished?, true)
+
+      winners = players
+      |> Enum.map(fn x -> x.hand end)
+      |> Ranker.find_winners()
     else
       round
     end
   end
+
+  def finished?(~M{%Round finished?}), do: finished?
 
   def move(round = %Round{}, context) do
     round

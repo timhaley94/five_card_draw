@@ -72,6 +72,12 @@ defmodule FiveCardDraw.Hand do
     |> Enum.reverse()
   end
 
+  def high_card_rank_int(hand = %Hand{}) do
+    hand
+    |> card_rank_ints
+    |> List.first()
+  end
+
   def exchange(hand = %Hand{ exchanged?: false }, []) do
     hand
     |> Map.put(:exchanged?, true)

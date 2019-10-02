@@ -39,7 +39,6 @@ defmodule FiveCardDrawWeb.MixProject do
     [
       {:phoenix, "~> 1.4.0"},
       {:phoenix_pubsub, "~> 1.1"},
-      {:phoenix_ecto, "~> 4.0"},
       {:gettext, "~> 0.11"},
       {:five_card_draw, in_umbrella: true},
       {:jason, "~> 1.0"},

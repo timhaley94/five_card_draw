@@ -2,7 +2,6 @@ defmodule FiveCardDraw.Player do
   alias __MODULE__
   alias FiveCardDraw.Purse
   alias FiveCardDraw.Hand
-  import UUID
   import ShorterMaps
 
   @ante_value 5
@@ -14,8 +13,6 @@ defmodule FiveCardDraw.Player do
     hand: nil,
     purse: nil
   )
-
-  defp generate_id, do: uuid1()
 
   def ante(player = %Player{ anted?: false }) do
     player
@@ -70,9 +67,9 @@ defmodule FiveCardDraw.Player do
     end)
   end
 
-  def new() do
+  def new(id) do
     %Player{
-      id: generate_id(),
+      id: id,
       purse: Purse.new(),
     }
   end

@@ -1,5 +1,4 @@
 defmodule FiveCardDraw.GameSupervisor do
-  alias __MODULE__
   alias FiveCardDraw.GameServer
   import UUID
   use DynamicSupervisor

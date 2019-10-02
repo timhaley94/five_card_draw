@@ -6,7 +6,6 @@ use Mix.Config
 
 # General application configuration
 config :five_card_draw_web,
-  ecto_repos: [FiveCardDraw.Repo],
   generators: [context_app: :five_card_draw]
 
 # Configures the endpoint
